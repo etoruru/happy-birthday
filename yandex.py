@@ -1,17 +1,17 @@
-prd = ['amount', 'unit']
-ls = ['people', 'count_stuff', 'stuff']
-prs = ['price','amount','unit']
-info = ['amount', 'unit', 'pr', 'fats', 'chd','cal']
+PRODUCT_LIST = ['amount', 'unit']
+DISH_LIST = ['people', 'count_stuff', 'stuff']
+PRICE_LIST = ['price','amount','unit']
+ENERGYVAL_LIST = ['amount', 'unit', 'pr', 'fats', 'chd','cal']
+
 stuff = {}
-result = []
-result1 = {}
+amount_to_cook = {}
 num_food = {}
-cpfch = {}
+energy_value = {}
 
 n = []
 
 dish = {}
-price_d = {}
+price_dishes = {}
 info_food = {}
 
 def read_file():
@@ -23,96 +23,102 @@ def read_file():
 text = read_file()
 
 
-def create_dict(d, l):
-    global text, i
-    res = {}
-    n_s = text[i][0]
-    p = [text[i][n+1] for n in range(len(text[i])-1)]
-    c = dict(zip(l,p))
-    d.update({n_s: c})
-    return d
+def create_dict(l, i):
+    global text
+    line = [text[i][n+1] for n in range(len(text[i])-1)]
+    result = dict(zip(l,line))
+    return result
 
-
-i = 0
-while i != len(text):
-    if len(text[i]) == 1:
-        n.append(text[i])
-        i += 1
-    elif len(text[i]) == 3:
-        name_food = [text[i][j] for j in range(len(text[i]))]
-        n_f = name_food[0]
-        name_food.pop(0)
-        people = int(name_food[0])
-        count_stuff = int(name_food[1])
-        i += 1
-        j = 0
-        while j != count_stuff:
-            st = create_dict(stuff, prd)
-            j += 1
+def create(stuff, dish, price_dishes,info_food):
+    i = 0
+    while i != len(text):
+        if len(text[i]) == 1:
+            n.append(text[i])
             i += 1
-        di = dict(zip(ls,[people, count_stuff,st]))
-        dish.update({n_f: di})
-        stuff = {}
-    elif len(text[i]) == 4:
-        price_dishes = create_dict(price_d, prs)
-        i += 1
-    else:
-        info_f = create_dict(info_food, info)
-        i += 1
+        elif len(text[i]) == 3:
+            name_food = [text[i][j] for j in range(len(text[i]))]
+            name = name_food[0]
+            name_food.pop(0)
+            people = int(name_food[0])
+            count_stuff = int(name_food[1])
+            i += 1
+            j = 0
+            while j != count_stuff:
+                name_stuff = text[i][0]
+                st = create_dict(PRODUCT_LIST, i)
+                stuff.update({name_stuff: st})
+                j += 1
+                i += 1
+            di = dict(zip(DISH_LIST, [people, count_stuff,stuff]))
+            dish.update({name: di})
+            stuff = {}
+        elif len(text[i]) == 4:
+            name_stuff = text[i][0]
+            price_dish = create_dict(PRICE_LIST, i)
+            price_dishes.update({name_stuff: price_dish})
+            i += 1
+        else:
+            name_stuff = text[i][0]
+            info_f = create_dict(ENERGYVAL_LIST, i)
+            info_food.update({name_stuff: info_f})
+            i += 1
 
+create(stuff, dish, price_dishes,info_food)
 #===============================================================
 
 def count_amount_to_cook():
     global dish
-    c = 0
+    sum = 0
+    list_result = []
+    result = {}
     for i in dish.keys():
-        d = list(dish[i].keys())                          #people,count_stuff, stuff
-        c = dish[i][d[0]]                                   #people
-        k = dish[i][d[len(d)-1]]
-        l = list(k.keys())
-        r = {j: [int(k[j]['amount'])*c, k[j]['unit']]for j in l}
-        result.append(r)
-    for key1 in result[0]:
-        for key2 in result[1]:
+        dish_keys = list(dish[i].keys())
+        num_people = dish[i][dish_keys[0]]
+        stuff = dish[i][dish_keys[len(dish_keys)-1]]
+        stuff_keys = list(stuff.keys())
+        line = {j: [int(stuff[j]['amount'])*num_people, stuff[j]['unit']]for j in stuff_keys}
+        list_result.append(line)
+    for key1 in list_result[0]:
+        for key2 in list_result[1]:
             if key1 == key2:
-                a = result[0][key1][0]
-                b = result[1][key2][0]
-                c = a + b
-                result[1][key2][0] = c
-    for i in result:
-        result1.update(i)
-    return result1
+                a = list_result[0][key1][0]
+                b = list_result[1][key2][0]
+                sum = a + b
+                list_result[1][key2][0] = sum
+    for i in list_result:
+        result.update(i)
+    return result
 
 
-def convert_unit(s, d): #s:string, r:string
-    if  d[s]['unit'] == 'l\n' or d[s]['unit'] == 'l':
-        d[s]['unit'] = 'ml'
-        d[s]['amount'] = int(d[s]['amount']) * 1000
-    elif d[s]['unit'] == 'tens\n':
-        d[s]['unit'] = 'cnt'
-        d[s]['amount'] = int(d[s]['amount']) * 10
-    elif d[s]['unit'] == 'kg':
-        d[s]['unit'] = 'g'
-        d[s]['amount'] = int(d[s]['amount']) * 1000
+def convert_unit(name_food, dict_):
+    if  dict_[name_food]['unit'] == 'l\n' or dict_[name_food]['unit'] == 'l':
+        dict_[name_food]['unit'] = 'ml'
+        dict_[name_food]['amount'] = int(dict_[name_food]['amount']) * 1000
+    elif dict_[name_food]['unit'] == 'tens\n':
+        dict_[name_food]['unit'] = 'cnt'
+        dict_[name_food]['amount'] = int(dict_[name_food]['amount']) * 10
+    elif dict_[name_food]['unit'] == 'kg':
+        dict_[name_food]['unit'] = 'g'
+        dict_[name_food]['amount'] = int(dict_[name_food]['amount']) * 1000
 
 
-def count_amount_to_buy(r, d):   # r: string; d: dict;
+def count_amount_to_buy(name_food, d):   # name_food: string; d: dict;
     global price_dishes
-    c = 1
-    if r in d:
-        if d[r][1] != price_dishes[r]['unit']:
-            convert_unit(r, price_dishes)
-        if d[r][0] < int(price_dishes[r]['amount']):
-            return c
+    counter = 1
+    if name_food in d:
+        if d[name_food][1] != price_dishes[name_food]['unit']:
+            convert_unit(name_food, price_dishes)
+        if d[name_food][0] < int(price_dishes[name_food]['amount']):
+            return counter
         else:
-            s = d[r][0]
-            while s > int(price_dishes[r]['amount']):
-                c += 1
-                s -= int(price_dishes[r]['amount'])
-            return c
+            amount = d[name_food][0]
+            while amount > int(price_dishes[name_food]['amount']):
+                counter += 1
+                amount -= int(price_dishes[name_food]['amount'])
+            return counter
     else:
-        c = 0
-    return c
+        counter = 0
+    return counter
 
 
 def count_price(d):       # d:dict
@@ -124,69 +130,65 @@ def count_price(d):       # d:dict
     return sum
 
 
-def num_proteins(f):
-    global info_f, dish
+def num_proteins(name_food, info_food, dish):
     sum = 0
-    for key in list(dish[f]['stuff'].keys()):
-        if key in list(info_f.keys()):
-            sum += float(info_f[key]['pr']) * float(dish[f]['stuff'][key]['amount']) / float(info_f[key]['amount'])
+    for key in list(dish[name_food]['stuff'].keys()):
+        if key in list(info_food.keys()):
+            sum += float(info_food[key]['pr']) * float(dish[name_food]['stuff'][key]['amount']) / float(info_food[key]['amount'])
     return sum
 
 
-def num_fats(f):
-    global info_f, dish
+def num_fats(name_food, info_food, dish):
     sum = 0
-    for key in list(dish[f]['stuff'].keys()):
-        if key in list(info_f.keys()):
-            sum += float(info_f[key]['fats']) * float(dish[f]['stuff'][key]['amount']) / float(info_f[key]['amount'])
+    for key in list(dish[name_food]['stuff'].keys()):
+        if key in list(info_food.keys()):
+            sum += float(info_food[key]['fats']) * float(dish[name_food]['stuff'][key]['amount']) / float(info_food[key]['amount'])
     return sum
 
 
-def num_carbohydrates(f):
-    global info_f, dish
+def num_carbohydrates(name_food, info_food, dish):
     sum = 0
-    for key in list(dish[f]['stuff'].keys()):
-        if key in list(info_f.keys()):
-            sum += float(info_f[key]['chd']) * float(dish[f]['stuff'][key]['amount']) / float(info_f[key]['amount'])
+    for key in list(dish[name_food]['stuff'].keys()):
+        if key in list(info_food.keys()):
+            sum += float(info_food[key]['chd']) * float(dish[name_food]['stuff'][key]['amount']) / float(info_food[key]['amount'])
     sum = round(sum, 3)
     return sum
 
 
-def count_cal(s):  # s:string
-    global dish, info_f
+def count_cal(name_food, info_food, dish):  # s:string
     cal = 0
-    for key in list(dish[s]['stuff'].keys()):
-        if info_f[key]['unit'] != dish[s]['stuff'][key]['unit']:
-            convert_unit(key, info_f)
-        if key in list(info_f.keys()):
-            info_f[key]['cal'] = info_f[key]['cal'].replace('\n', '')
-            cal += (float(info_f[key]['cal']) * float(dish[s]['stuff'][key]['amount']) / float(info_f[key]['amount']))
+    for key in list(dish[name_food]['stuff'].keys()):
+        if info_food[key]['unit'] != dish[name_food]['stuff'][key]['unit']:
+            convert_unit(key, info_food)
+        if key in list(info_food.keys()):
+            info_food[key]['cal'] = info_food[key]['cal'].replace('\n', '')
+            cal += (float(info_food[key]['cal']) * float(dish[name_food]['stuff'][key]['amount']) / float(info_food[key]['amount']))
     return cal
 
 
-def write_to_file(sum,n,c):
+def write_to_file(sum,num_food,energy_value):
     with open('result.txt','w') as f:
         f.writelines(str(sum) + '\n')
-        for key,value in n.items():
-            s = key + ' ' + str(value)
-            f.writelines(s + '\n')
-        for key, value in c.items():
-            v = ''.join(str(value))
-            s = key + ' ' + v
-            f.writelines(s + '\n')
+        for key,value in num_food.items():
+            string = key + ' ' + str(value)
+            f.writelines(string + '\n')
+        for key, value in energy_value.items():
+            val = ''.join(str(value))
+            string = key + ' ' + val
+            f.writelines(string + '\n')
 
 
 
 if __name__ == '__main__':
-    result = count_amount_to_cook()
+    amount_to_cook = count_amount_to_cook()
     for i in list(price_dishes.keys()):
-        c = count_amount_to_buy(i,result)
+        c = count_amount_to_buy(i,amount_to_cook)
         num_food.update({i: c})
     sum = count_price(num_food)
     for key in list(dish.keys()):
-        c = count_cal(key)
-        p = num_proteins(key)
-        f = num_fats(key)
-        ch = num_carbohydrates(key)
-        cpfch.update({key: [p,f,ch,c]})
-    write_to_file(sum,num_food,cpfch)
+        cal = count_cal(key, info_food,dish)
+        proteins = num_proteins(key, info_food,dish)
+        fats = num_fats(key, info_food,dish)
+        carbohydrates = num_carbohydrates(key, info_food,dish)
+        energy_value.update({key: [proteins,fats,carbohydrates,cal]})
+    write_to_file(sum,num_food,energy_value)
